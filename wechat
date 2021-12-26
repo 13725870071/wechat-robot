@@ -1,0 +1,183 @@
+# -*- coding: utf-8 -*-
+# author:           咕咚
+# create_date:      2021/11/19
+# file_name:        wechat.py
+
+import requests
+import itchat
+from threading import Timer
+import time
+
+
+global daoxv
+daoxv = False
+global xiaohua
+xiaohua = False
+
+
+# 获取金山词霸每日一句，英文和翻译
+def get_news():
+    # 金山词霸的地址
+    url = "http://open.iciba.com/dsapi"
+    r = requests.get(url)
+    contents = r.json()['content']
+    translation = r.json()['translation']
+    note = r.json()['note']
+    return contents, translation, note
+
+def send_news():
+
+    try:
+        # 指定微信个人用户
+        # name改成你给对方微信的备注
+        user = itchat.search_friends(name='咕咚')
+        userName = user[0]["UserName"]
+
+        # 获取金山字典的内容
+        # message0 = "登录微信机器人成功"
+        message1 = str(get_news()[0])
+        # content = str(get_news()[1][17:])
+        # message2 = str(content)
+        note = str(get_news()[2])
+        message3 = str(note)
+        message4 = "来自微信机器人的自动回复"
+        message5 = "重要的事情说三遍"
+
+        # 指定用户发送微信消息
+        # itchat.send(message0, toUserName=userName)
+        itchat.send(message1, toUserName=userName)
+        itchat.send(message3, toUserName=userName)
+        itchat.send(message4, toUserName=userName)
+
+        # 查找微信群，替换"XXX"为你要发送消息的群名称即可
+        users = itchat.search_chatrooms(name='微信机器人')
+        chatroomName = users[0]["UserName"]
+
+        #循环发送三次消息到群聊中
+        for i in range(0, 3):
+            itchat.send(message1, toUserName=chatroomName)
+            time.sleep(1)
+        itchat.send(message5, toUserName=chatroomName)
+
+        # 每隔86400秒发送一次，也就是每天发一次
+        Timer(300, send_news).start()
+    # try except用于异常处理
+    except:
+        message6 = "我又来了"
+        itchat.send(message6, toUserName=userName)
+
+# 机器人接口，用于实现对话
+def get_response(msg):
+    # 机器人的接口地址
+    apiUrl = 'http://www.tuling123.com/openapi/api'
+
+    data={
+        'key': 'your key',  #Key
+        'info': msg,  # 这是我们发出去的消息
+        'userid': 'wechat-robot',  # 微信机器人的id
+    }
+    # 通过如下命令发送一个post请求，json是一种数据交换格式，requests用于实现python对http的请求
+    r = requests.post(apiUrl, data=data).json()
+    return r.get('text')
+
+# 用于倒序文字的功能
+def auto_reverse(msg) :
+    # 将接收到的消息msg赋值到message
+    message = msg['Text']
+    str = message
+    # 将message倒序
+    return str[::-1]
+
+def auto_xiaohua(msg) :
+
+    message = msg['Text']
+    if message == u'1':
+        reply = u'1、节假日，爸妈希望你能多睡一会儿的的意思是早点睡，而不是晚点起。'
+    elif message == u'2':
+        reply = u'2、十一放假去女友家，路上，我问：你爸喝酒吗？然后又问：你妈做饭要我帮忙吗？女友：她从来不做饭。' \
+                u'这下我放心了。到了女友家后，发现女友真没骗我：女友父亲在厨房里忙得不亦乐乎。母亲非常能喝，频频给我敬酒。。。'
+    elif message == u'3':
+        reply = u'3、国庆假期里，上学小的儿子叫了个女同学来家里玩。女孩问：“如果你中了500万会怎样？”' \
+                u'儿子说：“我会叫爸爸再给我20万，凑够520万送给你。” 老婆对我说：“想不到吹牛也会遗传。”'
+    elif message == u'4':
+        reply = u'4、十一假期里，夫妻俩开着车在野兽园玩，停下车拍照的时候，一只公老虎慢慢向着车走过来。' \
+                u'老婆有点儿害怕，说：“老虎向我们走过来了，它来找吃的吗？”老公：“不是。”老婆：“那它来干什么？”老公笑着说：“找母老虎呗！ ”'
+    elif message == u'5':
+        reply = u'5、地铁上，看见一个小男孩在吃东西妈妈跟他说：儿子，地铁上有三只羊，中途来一只狼，那么还有几只羊呢？' \
+                u'小男孩自信满满得说：没有羊了，因为被狼吃了，妈妈我早知道了。“不，还有三只羊，因为地铁不能吃东西。”小男孩。。。'
+    elif message == u'6':
+        reply = u'6、小时候我妈不让我出去玩，我就藏在门后。如果一会她找不到我真的生气了，我就跳出来说逗你玩的；' \
+                u'如果她没什么事我就趁她不注意真的出去玩了。'
+    elif message == u'7':
+        reply = u'7、每当我们发展点什么兴趣，父母都会说“这玩意能当饭吃？”而真当我们把吃东西当兴趣时，他们又说：“整天就知道吃。”'
+    elif message == u'8':
+        reply = u'8、小时候过年，我挣了一百的压岁钱，那时候不舍得花，打算偷偷藏起来。找半天找了个隐秘的地方，藏在大花瓶底下。' \
+                u'用塑料袋包好，把花瓶挪一下位置，发现花瓶底下有五百块钱...'
+    elif message == u'9':
+        reply = u'9、天热了，周未儿子想吃冰糕，我上午他吃了一个，下午他忍不住，又悄悄地跑到冰箱那打开了冷冻门，' \
+                u'结果被我发现了，我大喝一声：“不能吃了！ ”儿子特委屈，嘴里嘟囔着：“有只冰糕告诉我，它想要一个温暖的家，我想帮帮它！ ”'
+    else:
+        reply = u'没有这个序号的笑话了哦'
+    return reply
+
+def auto_response(msg):
+    global daoxv
+    global xiaohua
+
+    message = msg['Text']
+    print('user:'+message)
+
+    # 文字倒序和讲笑话的功能
+    if daoxv is True and message != u'关闭倒序':
+        # 调用auto_reverse
+        reply = auto_reverse(msg)
+
+    elif xiaohua is True and message != u'关闭笑话':
+        # 调用xiaohua
+        reply = auto_xiaohua(msg)
+
+    else:
+        # 主要是一些关键词设置
+        # 如果接收到的消息 message = 设定好的关键词,则会调用下面的程序
+        if message == u'开启倒序':
+            daoxv = True
+            reply = u'已开启倒序模式，输入"关闭倒序"即可退出'
+        elif message == u'关闭倒序':
+            daoxv = False
+            reply = u'已退出倒序模式'
+
+        elif message == u'开启笑话':
+             xiaohua = True
+             reply = u'已开启笑话模式，输入"关闭笑话"即可退出。' \
+                     u'输入1-9之间任意数字即可推送不同的笑话'
+        elif message == u'关闭笑话':
+             xiaohua = False
+             reply = u'已退出笑话模式'
+        else:
+            # 机器人回复给好友
+             reply = get_response(msg['Text'])
+
+    print('robot:'+reply)
+
+    return reply
+
+# 用于接收来自朋友间的对话消息
+@itchat.msg_register(itchat.content.TEXT, isFriendChat=True)
+def print_content(msg):
+
+    return auto_response(msg)
+
+# 用于接收群里面的对话消息
+@itchat.msg_register([itchat.content.TEXT], isGroupChat=True)
+def print_content(msg):
+
+    return auto_response(msg)
+
+if __name__ == '__main__':
+    # jinshanapi = 'http://open.iciba.com/dsapi'
+    itchat.auto_login(hotReload=True)
+    # sentence = get_sentence(jinshanapi)
+    # content = sentence['content']  # 抓取的英文句子
+    # translation = sentence['note']  # 抓取的中文句子
+    send_news()
+    itchat.run()
